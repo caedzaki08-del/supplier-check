@@ -2,11 +2,11 @@
 window.KLIKI_CONFIG = {
   // ID Google Sheet data supplier (bahagian antara /d/ dan /edit dalam URL sheet).
   // Sheet mesti dikongsi "Anyone with the link: Viewer". Kosongkan = guna data asas dalam app.
-  SHEET_ID: '',
+  SHEET_ID: '1jBFxvB-rLO0Ourpu53ifWFYEa7yEa_W8fbwBgo78uYs',
 
   // URL Web App Apps Script (dari apps-script/Code.gs) untuk simpan perubahan HQ ke sheet.
   // Kosongkan = perubahan HQ hanya tersimpan dalam peranti itu.
-  APPS_SCRIPT_URL: '',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyQ5y7wxmIQJdelqMcIIO3rA490Bt89rc8VuWXIM2U6azle-wknd4w9LcuYBu4pXIAr/exec',
 
   // PIN admin HQ (SHA-256). Lalai: 1234. Tukar: jalankan  printf 'PINBARU' | sha256sum
   ADMIN_PIN_SHA256: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4',
