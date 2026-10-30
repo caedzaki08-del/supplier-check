@@ -189,20 +189,32 @@
     }
     return [];
   }
+  function pickKind(text, c) {
+    var t = ' ' + String(text || '').toLowerCase() + ' ', want = '';
+    if (/\bcpo\b/.test(t)) want = 'CPO';
+    else if (/e-?sim/.test(t)) want = 'eSIM';
+    else if (/\b(new|baru|sealed)\b/.test(t)) want = 'New';
+    else if (/\b(used|second|terpakai|2nd|preloved)\b/.test(t)) want = 'Used';
+    if (!want) return '';
+    return c.filter(function (k) { return k.indexOf(want) >= 0; })[0] || '';
+  }
   function kondisiHint(text) {
-    var t = String(text || '').toLowerCase();
-    if (!t.trim()) return '';
-    var c = detectKats(t);
+    if (!String(text || '').trim()) return '<div class="muted" style="margin-top:6px">Kategori semasa: <b>' + h(state.kat) + '</b>. Taip model untuk kesan automatik.</div>';
+    var c = detectKats(text);
     if (!c.length) return '<div class="callout warn" style="margin-top:8px">Brand tak dikenali. Pilih kategori di bawah.</div>';
-    if (c.length === 1) return '<div class="muted" style="margin-top:6px">Dikesan: <b>' + h(c[0]) + '</b></div>';
-    return '<div class="muted" style="margin-top:8px">Dikesan ' + h(c[0].indexOf('iPad') === 0 ? 'iPad' : 'iPhone') + '. Pilih jenis:</div><div class="chips" style="margin-top:6px">' +
-      c.map(function (k) { return '<button class="chip' + (k === state.kat ? ' on' : '') + '" data-act="pickkat" data-k="' + h(k) + '">' + h(k.replace(/^iP(ad)? ?/, function (m, a) { return a ? 'iPad ' : 'iPhone '; })) + '</button>'; }).join('') + '</div>';
+    return '<div class="muted" style="margin-top:6px">Dikesan: <b>' + h(state.kat) + '</b>' +
+      (c.length > 1 ? ' · tambah "used", "new", "esim" atau "cpo" pada carian untuk tukar jenis' : '') + '</div>';
   }
   function applyDetect() {
-    var c = detectKats(state.model);
-    if (c.length && c.indexOf(state.kat) < 0) { state.kat = c[0]; LS.set('kat', state.kat); }
+    var c = detectKats(state.model), unknown = !!String(state.model || '').trim() && !c.length;
+    if (c.length) {
+      var k = pickKind(state.model, c);
+      if (k) state.kat = k; else if (c.indexOf(state.kat) < 0) state.kat = c[0];
+      LS.set('kat', state.kat);
+    }
     var sel = $('#kat'); if (sel) sel.value = state.kat;
     var hint = $('#qhint'); if (hint) hint.innerHTML = kondisiHint(state.model);
+    var box = $('#katbox'); if (box && unknown) box.open = true;
   }
 
   /* ---------- tab SEMAK ---------- */
@@ -214,8 +226,8 @@
       '<input type="text" id="model" list="mlist" placeholder="cth: iPhone 15 Pro Max, Galaxy A55, Redmi Note 13" value="' + h(state.model) + '" autocomplete="off">' +
       '<datalist id="mlist">' + modelList().map(function (m) { return '<option value="' + h(m) + '">'; }).join('') + '</datalist>' +
       '<div id="qhint"></div>' +
-      '<label class="l" for="kat">Kategori / brand (auto, boleh tukar)</label>' +
-      '<select id="kat">' + katOptions(state.kat, false, false) + '</select>' +
+      '<details id="katbox" style="margin-top:10px"><summary class="muted" style="cursor:pointer">Tukar kategori manual</summary>' +
+      '<select id="kat" style="margin-top:6px">' + katOptions(state.kat, false, false) + '</select></details>' +
       '</div><div id="results"></div>';
     applyDetect();
     renderResults();
@@ -519,7 +531,6 @@
   }
 
   var actions = {
-    pickkat: function (el) { state.kat = el.dataset.k; LS.set('kat', state.kat); resetSkips(); applyDetect(); renderResults(); },
     outlet: function (el) { state.outlet = el.dataset.v; LS.set('outlet', state.outlet); resetSkips(); render(); },
     outlet2: function (el) { state.outlet = el.dataset.v; LS.set('outlet', state.outlet); render(); },
     add: function (el) { addToCart(el.dataset.sup); },
