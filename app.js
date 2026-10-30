@@ -347,24 +347,21 @@
         '<label class="l">Supplier</label><select data-act="setsup" data-id="' + h(it.id) + '">' + opts + '</select>' + warn + '</div>';
     }).join('');
 
-    var send = '<h2>Hantar order ikut supplier</h2>' + G.order.map(function (sup) {
+    var send = '<h2>Order ikut supplier (salin &amp; tampal dalam group)</h2>' + G.order.map(function (sup) {
       var lines = G.groups[sup];
       if (!sup) return '<div class="card"><b>Belum ada supplier</b><div class="callout far">' + lines.length +
         ' item tiada senarai prioriti. Hubungi HQ.</div></div>';
       var info = L.supplierInfo(data, sup), jr = L.jarakInfo(data, state.outlet, sup), jauh = !!(jr && jr.jauh);
       var msg = L.buildMessage(state.outlet, lines, { urgent: state.urgent, jauh: jauh });
-      var wa = L.waLink(info.wa, msg);
       var warn = '';
       if (jauh && state.urgent) warn = '<div class="callout far">Urgent tetapi supplier jauh dari ' + h(state.outlet) + '. Hari sama tak mungkin kecuali by hand. Pertimbang supplier lain.</div>';
       else if (jauh) warn = '<div class="callout far">' + h(L.TXT_JAUH) + '</div>';
       else if (jr) warn = '<div class="callout">' + h(L.TXT_DEKAT) + '</div>';
-      if (!info.wa) warn += '<div class="callout warn">Nombor WhatsApp ' + h(sup) + ' belum diisi (tab Supplier di sheet). WhatsApp akan buka pilihan kenalan.</div>';
       return '<div class="card"><div class="row"><div class="grow"><b style="font-size:16px">' + h(sup) + '</b>' +
         '<div class="muted">' + lines.length + ' baris · ' + lines.reduce(function (a, i) { return a + i.qty; }, 0) + ' unit' +
         (info.hantar ? ' · ' + h(info.hantar) : '') + '</div></div></div>' + warn +
         '<pre style="white-space:pre-wrap;background:#f4f8ff;border-radius:10px;padding:10px;margin:10px 0;font:13px/1.45 inherit">' + h(msg) + '</pre>' +
-        '<div class="row"><a class="btn wa grow" target="_blank" rel="noopener" href="' + h(wa) + '">Hantar WhatsApp</a>' +
-        '<button class="btn ghost" data-act="copy" data-sup="' + h(sup) + '">Salin</button></div></div>';
+        '<button class="btn wa block" data-act="copy" data-sup="' + h(sup) + '">Salin mesej untuk group ' + h(sup) + '</button></div>';
     }).join('');
 
     v.innerHTML = top + items + send +
