@@ -268,19 +268,25 @@
     return { own: own, gen: gen };
   }
   // -> { ada: true | false | null (tiada data), nota }
-  function adaInfo(data, outlet, kat, sup) {
+  function adaInfo(data, outlet, kat, sup, model) {
     var rs = adaRows(data, outlet, kat);
     var v = cellValue(rs.own, sup);
     if (v === undefined) v = cellValue(rs.gen, sup);
     if (v === undefined || norm(v) === '') return { ada: null, nota: '' };
     if (/^(n|x|tak|tiada|no|0|false|merah)$/i.test(norm(v))) return { ada: false, nota: '' };
     if (/^(y|ya|yes|1|true|ada|hijau|✓)$/i.test(norm(v))) return { ada: true, nota: '' };
-    return { ada: true, nota: norm(v) };
+    var nota = norm(v), ms = /^([a-z])\s*-?\s*series\s+only$/i.exec(nota);
+    if (ms && norm(model)) {
+      // cth "A-Series Only": kalau model yang ditaip jelas siri lain (S24, M15...), supplier ini dikira tiada
+      var sm = /\b([asmfz])\s?-?\d{1,3}\b/i.exec(model), sr = sm ? sm[1].toLowerCase() : (/\b(fold|flip)/i.test(model) ? 'z' : '');
+      if (sr && sr !== ms[1].toLowerCase()) return { ada: false, nota: '' };
+    }
+    return { ada: true, nota: nota };
   }
-  function adaSuppliers(data, outlet, kat) {
+  function adaSuppliers(data, outlet, kat, model) {
     var rs = adaRows(data, outlet, kat), row = rs.own || rs.gen, out = [];
     if (!row) return out;
-    Object.keys(row.cells).forEach(function (s) { if (adaInfo(data, outlet, kat, s).ada) out.push(s); });
+    Object.keys(row.cells).forEach(function (s) { if (adaInfo(data, outlet, kat, s, model).ada) out.push(s); });
     return out;
   }
 
@@ -291,7 +297,7 @@
     var res = resolvePriority(data, kat, model, outlet);
     var chosen = null, seq = 0, tiada = [];
     function mk(name, rk, note) {
-      var ad = adaInfo(data, outlet, kat, name);
+      var ad = adaInfo(data, outlet, kat, name, model);
       var jr = jarakInfo(data, outlet, name), info = supplierInfo(data, name);
       return {
         name: name, rank: rk, habis: stokHabis(data, name, kat, model), skipped: !!(skips && skips.has(name)), info: info,
@@ -305,13 +311,13 @@
     var inList = {}, items = [];
     res.list.forEach(function (name, i) {
       inList[key(name)] = 1;
-      var ad = adaInfo(data, outlet, kat, name);
+      var ad = adaInfo(data, outlet, kat, name, model);
       if (ad.ada === false) { tiada.push(name); return; }
       var it = mk(name, ++seq, res.notes[i]);
       if (!chosen && !it.habis && !it.skipped) { it.pick = true; chosen = it; }
       items.push(it);
     });
-    var extras = adaSuppliers(data, outlet, kat).filter(function (s) { return !inList[key(s)]; }).map(function (s) {
+    var extras = adaSuppliers(data, outlet, kat, model).filter(function (s) { return !inList[key(s)]; }).map(function (s) {
       var it = mk(s, 0, ''); it.extra = true; return it;
     });
     return { items: items, extras: extras, tiada: tiada, pick: chosen, scope: res.scope, viaGroup: res.viaGroup };
