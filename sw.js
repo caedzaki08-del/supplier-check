@@ -1,5 +1,5 @@
 /* Service worker: app shell boleh guna offline. Data sheet diurus oleh app (cache sendiri). */
-const VER = 'ksp-v2';
+const VER = 'ksp-v3';
 const SHELL = ['./', './index.html', './app.js', './logic.js', './config.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {

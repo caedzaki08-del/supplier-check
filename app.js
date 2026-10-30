@@ -149,11 +149,60 @@
     }).join('');
   }
 
-  function modelList(kat) {
+  function modelList() {
     var set = {};
-    data.priority.forEach(function (r) { if (r.model && L.key(r.kat) === L.key(kat)) set[r.model] = 1; });
-    data.harga.forEach(function (r) { if (r.model && (!r.kat || L.key(r.kat) === L.key(kat))) set[r.model] = 1; });
+    data.priority.forEach(function (r) { if (r.model) set[r.model] = 1; });
+    data.harga.forEach(function (r) { if (r.model) set[r.model] = 1; });
     return Object.keys(set).sort();
+  }
+
+  /* Kesan kategori/brand daripada nama model yang ditaip. Pulangkan senarai kategori calon ([] = tak dikenali). */
+  var IP_NEW_USED = ['iP Used', 'iP New', 'iP eSIM', 'iP CPO'];
+  var BRAND_RULES = [
+    ['iPad', /ipad/],
+    ['iPhone', /iphone|\bip\s?\d|^(1[0-9]|x[rs]?|se)\b/],
+    ['Poco', /poco/],
+    ['Redmagic', /red\s?magic/],
+    ['Iqoo', /iqoo/],
+    ['Samsung', /samsung|galaxy|\b[asmf]\d{2}\b|\bz\s?(fold|flip)|\bfold\b|\bflip\b|\bs2\d\b/],
+    ['Infinix', /infinix|\bhot\s?\d|\bzero\b|\bsmart\s?\d|\bnote\s?4\d/],
+    ['Redmi/Xiaomi', /redmi|xiaomi|\bmi\s?\d|\bnote\s?\d+/],
+    ['Tecno', /tecno|\bspark\b|camon|pova|phantom|pop\s?\d/],
+    ['Nothing', /nothing|\bcmf\b/],
+    ['Oneplus', /one\s?plus|\bnord\b/],
+    ['Google Pixel', /pixel/],
+    ['Realme', /realme|narzo|\bgt\s?\d|\bc\d{2}\b/],
+    ['Oppo', /oppo|\breno\s?\d|find\s?x/],
+    ['Vivo', /vivo|\b[yvx]\d{2}\b/],
+    ['Honor', /honor|\bmagic\s?\d|\bx\d\w?\b/]
+  ];
+  function detectKats(text) {
+    var t = String(text || '').toLowerCase().trim();
+    if (!t) return [];
+    for (var i = 0; i < BRAND_RULES.length; i++) {
+      if (BRAND_RULES[i][1].test(t)) {
+        var b = BRAND_RULES[i][0];
+        if (b === 'iPhone') return IP_NEW_USED;
+        if (b === 'iPad') return ['iPad New', 'iPad Used'];
+        return [b];
+      }
+    }
+    return [];
+  }
+  function kondisiHint(text) {
+    var t = String(text || '').toLowerCase();
+    if (!t.trim()) return '';
+    var c = detectKats(t);
+    if (!c.length) return '<div class="callout warn" style="margin-top:8px">Brand tak dikenali. Pilih kategori di bawah.</div>';
+    if (c.length === 1) return '<div class="muted" style="margin-top:6px">Dikesan: <b>' + h(c[0]) + '</b></div>';
+    return '<div class="muted" style="margin-top:8px">Dikesan ' + h(c[0].indexOf('iPad') === 0 ? 'iPad' : 'iPhone') + '. Pilih jenis:</div><div class="chips" style="margin-top:6px">' +
+      c.map(function (k) { return '<button class="chip' + (k === state.kat ? ' on' : '') + '" data-act="pickkat" data-k="' + h(k) + '">' + h(k.replace(/^iP(ad)? ?/, function (m, a) { return a ? 'iPad ' : 'iPhone '; })) + '</button>'; }).join('') + '</div>';
+  }
+  function applyDetect() {
+    var c = detectKats(state.model);
+    if (c.length && c.indexOf(state.kat) < 0) { state.kat = c[0]; LS.set('kat', state.kat); }
+    var sel = $('#kat'); if (sel) sel.value = state.kat;
+    var hint = $('#qhint'); if (hint) hint.innerHTML = kondisiHint(state.model);
   }
 
   /* ---------- tab SEMAK ---------- */
@@ -161,12 +210,14 @@
     $('#view').innerHTML =
       '<h2>Order untuk outlet</h2>' + outletChips('outlet') +
       '<h2>Apa nak order?</h2><div class="card">' +
-      '<label class="l" for="kat" style="margin-top:0">Kategori / brand</label>' +
+      '<label class="l" for="model" style="margin-top:0">Cari model (taip terus, brand dikesan automatik)</label>' +
+      '<input type="text" id="model" list="mlist" placeholder="cth: iPhone 15 Pro Max, Galaxy A55, Redmi Note 13" value="' + h(state.model) + '" autocomplete="off">' +
+      '<datalist id="mlist">' + modelList().map(function (m) { return '<option value="' + h(m) + '">'; }).join('') + '</datalist>' +
+      '<div id="qhint"></div>' +
+      '<label class="l" for="kat">Kategori / brand (auto, boleh tukar)</label>' +
       '<select id="kat">' + katOptions(state.kat, false, false) + '</select>' +
-      '<label class="l" for="model">Model (pilihan, jika HQ ada prioriti khas model)</label>' +
-      '<input type="text" id="model" list="mlist" placeholder="cth: 12 128GB" value="' + h(state.model) + '" autocomplete="off">' +
-      '<datalist id="mlist">' + modelList(state.kat).map(function (m) { return '<option value="' + h(m) + '">'; }).join('') + '</datalist>' +
       '</div><div id="results"></div>';
+    applyDetect();
     renderResults();
   }
 
@@ -468,6 +519,7 @@
   }
 
   var actions = {
+    pickkat: function (el) { state.kat = el.dataset.k; LS.set('kat', state.kat); resetSkips(); applyDetect(); renderResults(); },
     outlet: function (el) { state.outlet = el.dataset.v; LS.set('outlet', state.outlet); resetSkips(); render(); },
     outlet2: function (el) { state.outlet = el.dataset.v; LS.set('outlet', state.outlet); render(); },
     add: function (el) { addToCart(el.dataset.sup); },
@@ -586,7 +638,7 @@
 
   document.addEventListener('input', function (ev) {
     var t = ev.target;
-    if (t.id === 'model') { state.model = t.value; resetSkips(); renderResults(); }
+    if (t.id === 'model') { state.model = t.value; applyDetect(); resetSkips(); renderResults(); }
     else if (t.id === 'edmodel') { state.ed.model = t.value; }
     else if (t.dataset && t.dataset.act === 'ednote') { state.ed.notes[+t.dataset.i] = t.value; }
   });
