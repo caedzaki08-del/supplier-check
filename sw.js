@@ -1,6 +1,6 @@
 /* Service worker: app shell boleh guna offline. Data sheet diurus oleh app (cache sendiri). */
-const VER = 'ksp-v3';
-const SHELL = ['./', './index.html', './app.js', './logic.js', './config.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const VER = 'ksp-v4';
+const SHELL = ['./', './index.html', './app.js', './logic.js', './models.js', './config.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VER).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

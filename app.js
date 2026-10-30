@@ -151,6 +151,8 @@
 
   function modelList() {
     var set = {};
+    var cat = window.KLIKI_MODELS || {};
+    Object.keys(cat).forEach(function (k) { cat[k].forEach(function (m) { set[m] = 1; }); });
     data.priority.forEach(function (r) { if (r.model) set[r.model] = 1; });
     data.harga.forEach(function (r) { if (r.model) set[r.model] = 1; });
     return Object.keys(set).sort();
@@ -176,9 +178,26 @@
     ['Vivo', /vivo|\b[yvx]\d{2}\b/],
     ['Honor', /honor|\bmagic\s?\d|\bx\d\w?\b/]
   ];
+  /* Cuba padan dengan senarai model (models.js): kalau semua padanan jatuh dalam satu brand (atau jenis iPhone), guna itu. */
+  function catalogKats(t) {
+    var cat = window.KLIKI_MODELS; if (!cat || t.length < 2) return [];
+    var kw = /\b(cpo|e-?sim|new|baru|sealed|used|second|terpakai|2nd|preloved)\b/.test(t);
+    var q = t.replace(/\b(cpo|e-?sim|new|baru|sealed|used|second|terpakai|2nd|preloved)\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim(), hit = {};
+    if (!q) return [];
+    Object.keys(cat).forEach(function (k) {
+      for (var i = 0; i < cat[k].length; i++) {
+        var m = cat[k][i].toLowerCase().replace(/[^a-z0-9]+/g, ' ');
+        if (m.indexOf(q) === 0 || (' ' + m).indexOf(' ' + q) >= 0) { hit[k] = 1; break; }
+      }
+    });
+    var ks = Object.keys(hit), ip = ks.filter(function (k) { return k.indexOf('iP') === 0; });
+    if (ks.length && ip.length === ks.length) return kw ? IP_NEW_USED : IP_NEW_USED.filter(function (k) { return hit[k]; });
+    return ks.length === 1 ? ks : [];
+  }
   function detectKats(text) {
     var t = String(text || '').toLowerCase().trim();
     if (!t) return [];
+    var ck = catalogKats(t); if (ck.length) return ck;
     for (var i = 0; i < BRAND_RULES.length; i++) {
       if (BRAND_RULES[i][1].test(t)) {
         var b = BRAND_RULES[i][0];
