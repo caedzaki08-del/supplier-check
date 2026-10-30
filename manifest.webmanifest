@@ -1,0 +1,15 @@
+{
+  "name": "KLIKI Supplier Check",
+  "short_name": "Supplier",
+  "description": "Semak supplier ikut prioriti HQ dan buat order untuk purchaser KLIKI",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef3fb",
+  "theme_color": "#1456d9",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
