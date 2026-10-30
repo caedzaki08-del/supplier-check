@@ -347,7 +347,7 @@
         '<label class="l">Supplier</label><select data-act="setsup" data-id="' + h(it.id) + '">' + opts + '</select>' + warn + '</div>';
     }).join('');
 
-    var send = '<h2>Order ikut supplier (salin &amp; tampal dalam group)</h2>' + G.order.map(function (sup) {
+    var send = '<h2>Hantar order ikut supplier</h2>' + G.order.map(function (sup) {
       var lines = G.groups[sup];
       if (!sup) return '<div class="card"><b>Belum ada supplier</b><div class="callout far">' + lines.length +
         ' item tiada senarai prioriti. Hubungi HQ.</div></div>';
@@ -361,7 +361,7 @@
         '<div class="muted">' + lines.length + ' baris · ' + lines.reduce(function (a, i) { return a + i.qty; }, 0) + ' unit' +
         (info.hantar ? ' · ' + h(info.hantar) : '') + '</div></div></div>' + warn +
         '<pre style="white-space:pre-wrap;background:#f4f8ff;border-radius:10px;padding:10px;margin:10px 0;font:13px/1.45 inherit">' + h(msg) + '</pre>' +
-        '<button class="btn wa block" data-act="copy" data-sup="' + h(sup) + '">Salin mesej untuk group ' + h(sup) + '</button></div>';
+        '<div class="row"><button class="btn ghost" data-act="copy" data-sup="' + h(sup) + '">Salin</button></div></div>';
     }).join('');
 
     v.innerHTML = top + items + send +
